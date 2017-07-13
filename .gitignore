@@ -27,6 +27,6 @@ classes/
 .data
 .dist/
 DummyTest
-speex-1.2.0/
 .DS_Store
 *.o
+*.gch

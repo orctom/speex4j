@@ -10,6 +10,7 @@ import java.net.URL;
 public class NativeUtils {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NativeUtils.class);
+  private static final String PREFIX = "/lib";
 
   /**
    * Load the native library from classpath.
@@ -33,13 +34,13 @@ public class NativeUtils {
     OS os = OSUtils.getOS();
     switch (os) {
       case MAC:
-        return "/" + name + ".dylib";
+        return PREFIX + name + ".dylib";
       case WIN:
-        return "/" + name + ".dll";
+        return PREFIX + name + ".dll";
       case LINUX:
-        return "/" + name + ".so";
+        return PREFIX + name + ".so";
       default:
-        return "/" + name + ".so";
+        return PREFIX + name + ".so";
     }
   }
 }
