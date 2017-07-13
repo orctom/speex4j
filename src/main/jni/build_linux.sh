@@ -11,12 +11,13 @@ gcc  -shared -fPIC \
 
 echo "Linking..."
 gcc  -shared -fPIC  -o libspeexcodec.so \
-  -c com_orctom_speex4j_SpeexDecoder.h com_orctom_speex4j_SpeexDecoder.c slots.h slots.c \
+  com_orctom_speex4j_SpeexDecoder.o slots.o \
   -I/$JAVA_HOME/include \
   -I/$JAVA_HOME/include/linux/ \
   -I speex-1.2.0/include/ \
   -L speex-1.2.0/lib \
+  -l speex \
   -I .
 
-cp libspeexcodec.so ../resources/
+mv libspeexcodec.so ../resources/
 echo "Done".
