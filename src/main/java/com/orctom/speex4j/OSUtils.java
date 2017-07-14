@@ -2,16 +2,17 @@ package com.orctom.speex4j;
 
 public abstract class OSUtils {
 
-  private static String os = System.getProperty("os.name").toLowerCase();
+  private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
+  private static final String ARCH = System.getProperty("os.arch").toLowerCase();
 
   public static OS getOS() {
-    if (os.contains("nux") || os.contains("nix")) {
+    if (OS_NAME.contains("nux") || OS_NAME.contains("nix")) {
       return OS.LINUX;
     }
-    if (os.contains("mac")) {
+    if (OS_NAME.contains("mac")) {
       return OS.MAC;
     }
-    if (os.contains("win")) {
+    if (OS_NAME.contains("win")) {
       return OS.WIN;
     }
 
