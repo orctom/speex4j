@@ -4,19 +4,17 @@ import com.google.common.io.ByteStreams;
 import org.junit.*;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class SpeexCodecTest {
+public class SpeexDecoderTest {
 
   @Test
   public void decode() throws Exception {
     InputStream in = getClass().getResourceAsStream("/sample.spx");
     byte[] bytes = ByteStreams.toByteArray(in);
-    SpeexCodec codec = new SpeexCodec(SpeexOptions.DEFAULT);
+    SpeexDecoder codec = SpeexDecoder.newInstance(SamplingRate.WIDE_BAND);
 
     int chunkSize = 1775;
     int startIndex = 0;
@@ -34,18 +32,6 @@ public class SpeexCodecTest {
       if (null != pcm) {
         System.out.println(pcm.length);
       }
-    }
-  }
-
-  @Test
-  public void encode() throws Exception {
-    InputStream in = getClass().getResourceAsStream("/sample.pcm");
-    byte[] bytes = ByteStreams.toByteArray(in);
-    SpeexCodec codec = new SpeexCodec(SpeexOptions.DEFAULT);
-    byte[] spx = codec.encode(bytes);
-    System.out.println(null == spx);
-    if (null != spx) {
-      System.out.println(spx.length);
     }
   }
 

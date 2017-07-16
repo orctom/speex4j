@@ -1,160 +1,52 @@
+#include <stdio.h>
+#include "speex/speex.h"
 #include "com_orctom_speex4j_SpeexDecoder.h"
-
-#include <stdlib.h>
-#include <string.h>
-
-#include "slots.h"
-
-static struct SlotVector slots = {
-    0,0
-};
-
-JNIEXPORT jint JNICALL Java_com_orctom_speex4j_SpeexDecoder_allocate
-  (JNIEnv *env, jclass cls, jint wideband)
-{
-    int slot = allocate_slot(&slots);
-
-    //
-
-    slots.slots[slot] = malloc(sizeof(struct Slot));
-
-    struct Slot* gob = slots.slots[slot];
-
-    //
-
-    speex_bits_init(&gob->bits);
+#include "commons.h"
 
 
-    const SpeexMode * mode;
-    switch (wideband) {
-    case 1:
-	mode = &speex_wb_mode;
-	break;
-    case 2:
-	mode = &speex_uwb_mode;
-	break;
-    default:
-	mode = &speex_nb_mode;
-	break;
-    }
+SpeexBits bits;
+void *state;
+int frame_size;
 
-    gob->state = speex_decoder_init(mode);
+JNIEXPORT void JNICALL Java_com_orctom_speex4j_SpeexDecoder_open
+        (JNIEnv *env, jobject obj, jint mode) {
+    speex_bits_init(&bits);
+    const SpeexMode *speexMode = getSpeexMode((int) mode);
+    state = speex_encoder_init(speexMode);
 
-    return slot;
+    speex_decoder_ctl(state, SPEEX_GET_FRAME_SIZE, &frame_size);
+#ifdef DEBUG
+    printf("decoder frame size: %d\n", frame_size);
+#endif
 }
 
-//
+JNIEXPORT jint JNICALL Java_com_orctom_speex4j_SpeexDecoder_decode
+        (JNIEnv *env, jobject obj, jbyteArray spx, jshortArray pcm) {
+    char buffer[frame_size];
+    jshort output_buffer[1775];
+    int code = 0;
 
-static void throwIllegalArgumentException(JNIEnv *env, char * msg)
-{
-    jclass newExcCls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
-    if (newExcCls == 0) /* Unable to find the new exception class, give up. */
-	return;
-    (*env)->ThrowNew(env, newExcCls, msg);
+    int size = (*env)->GetArrayLength(env, spx);
+    speex_bits_reset(&bits);
+//    for (int i = 0; i < n_frame; i++) {
+//        speex_bits_reset(&bits);
+//        (*env)->GetByteArrayRegion(env, spx, i * frame_size, frame_size, buffer);
+//        speex_bits_read_from(&bits, (char *) buffer, frame_size);
+//        int n_byte = speex_decode_int(state, &bits, output_buffer);
+//        printf("decoded to %d bytes, vs. %d\n", n_byte, frame_size * 12);
+//        (*env)->SetShortArrayRegion(env, pcm, i * n_byte, n_byte, output_buffer);
+//    }
+    printf("bits->buf_size: %d\n", bits.buf_size);
+    (*env)->GetByteArrayRegion(env, spx, 0, size, (jbyte *) buffer);
+    speex_bits_read_from(&bits, (char *)buffer, size);
+    speex_decode_int(state, &bits, output_buffer);
+    (*env)->SetShortArrayRegion(env, pcm, 0, frame_size, output_buffer);
+
+    return (jint)code;
 }
 
-static void throwOutOfMemoryError(JNIEnv *env, char * msg)
-{
-    jclass newExcCls = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
-    if (newExcCls == 0) /* Unable to find the new exception class, give up. */
-	return;
-    (*env)->ThrowNew(env, newExcCls, msg);
-}
-
-//
-
-static int throwIfBadSlot(JNIEnv *env, jint slot)
-{
-    if (slot>=slots.nslots) {
-	throwIllegalArgumentException(env, "bogus slot");
-	return 1;
-    }
-
-    if ((void*)0 == slots.slots[slot]) {
-	jclass newExcCls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
-	if (newExcCls == 0) /* Unable to find the new exception class, give up. */
-	    return 1;
-	(*env)->ThrowNew(env, newExcCls, "slot is already empty");
-	return 1;
-    }
-
-    return 0; // the slot is good
-}
-
-//
-
-JNIEXPORT void JNICALL Java_com_orctom_speex4j_SpeexDecoder_deallocate
-  (JNIEnv *env, jclass cls, jint slot)
-{
-    if (throwIfBadSlot(env, slot))
-	return;
-
-    speex_bits_destroy(&slots.slots[slot]->bits);
-    speex_decoder_destroy(slots.slots[slot]->state);
-
-    free( slots.slots[slot] );
-    slots.slots[slot] = (void*)0;
-}
-
-int decode_spx(const char *in_buf, const int in_size, char *decoded_data, int *out_size) {
-    #define FRAME_SIZE 320
-    short speex_output[320];
-    int nbBytes = 70;
-    void *state;
-    SpeexBits m_bits;
-    int i, tmp;
-
-    state = speex_decoder_init(&speex_wb_mode);
-    int enc_enh = 1;
-    speex_decoder_ctl(state, SPEEX_SET_ENH, &enc_enh);
-    speex_bits_init(&m_bits);
-
-    int in_start_pos = 0;
-    int out_start_pos = 0;
-    while (1) {
-        int length = in_buf[in_start_pos];
-        in_start_pos += 1;
-        speex_bits_read_from(&m_bits, in_buf + in_start_pos, length);
-        in_start_pos += length;
-
-        int ret = speex_decode_int(state, &m_bits, speex_output);
-
-        for (i=0;i<FRAME_SIZE;i++) {
-            decoded_data[out_start_pos + 2*i+1]  = (char)((speex_output[i] >> 8) & 0xff);
-            decoded_data[out_start_pos + 2*i] = (char)(speex_output[i] & 0xff);
-        }
-
-        out_start_pos += FRAME_SIZE*2;
-        if (in_start_pos == in_size) {
-            break;
-        } else if (in_start_pos > in_size) {
-            //fprintf(stdout, "decode bad!");
-        }
-        //fprintf(stdout, "%s.%d\n", __FILE__, __LINE__);
-    }
-    *out_size = out_start_pos;
-
-    speex_decoder_destroy(state);
-    speex_bits_destroy(&m_bits);
-
-    return 0;
-}
-
-JNIEXPORT jbyteArray JNICALL Java_com_orctom_speex4j_SpeexDecoder_decode
-  (JNIEnv *env, jclass cls, jint slot, jbyteArray input_frame_, jint length, jbyteArray output_frame_, jint index)
-{
-    if (throwIfBadSlot(env, slot))
-    	return 0;
-
-    struct Slot * gob = slots.slots[slot];
-    int frame_length = (*env)->GetArrayLength(env, input_frame_);
-    char* input_frame = (*env)->GetByteArrayElements(env, input_frame_, 0);
-    char rval[16000];
-    int dst_length = 0;
-    int ret = decode_spx(input_frame, length, rval, &dst_length);
-
-    (*env)->ReleaseByteArrayElements(env, input_frame_, input_frame, 0);
-    jbyteArray array = (*env)->NewByteArray(env, dst_length);
-    (*env)->SetByteArrayRegion(env, array, 0, dst_length, rval);
-    return array;
+JNIEXPORT void JNICALL Java_com_orctom_speex4j_SpeexDecoder_destroy
+        (JNIEnv *env, jobject obj) {
+    speex_bits_destroy(&bits);
+    speex_encoder_destroy(state);
 }

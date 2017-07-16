@@ -29,4 +29,6 @@ classes/
 DummyTest
 .DS_Store
 *.o
+*.gchhs_er
+hs_er*
 *.gch
