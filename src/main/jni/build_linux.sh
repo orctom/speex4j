@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
-gcc -o libHelloImpl.so -lc -shared \
-    -I/usr/local/jdk1.6.0_03/include \
-    -I/usr/local/jdk1.6.0_03/include/linux com_marakana_jniexamples_Hello.c
+echo "Compiling..."
+gcc  -shared -fPIC \
+  -c com_orctom_speex4j_SpeexDecoder.h com_orctom_speex4j_SpeexDecoder.c slots.h slots.c \
+  -I/$JAVA_HOME/include \
+  -I/$JAVA_HOME/include/linux/ \
+  -I speex-1.2.0/include/ \
+  -I .
+
+echo "Linking..."
+gcc  -shared -fPIC  -o libspeexcodec.so \
+  -c com_orctom_speex4j_SpeexDecoder.h com_orctom_speex4j_SpeexDecoder.c slots.h slots.c \
+  -I/$JAVA_HOME/include \
+  -I/$JAVA_HOME/include/linux/ \
+  -I speex-1.2.0/include/ \
+  -L speex-1.2.0/lib \
+  -I .
+
+cp libspeexcodec.so ../resources/
+echo "Done".
