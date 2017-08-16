@@ -8,13 +8,12 @@ public class SpeexDecoder {
     slot = allocate(samplingRate.getCode());
   }
 
-  @Override
-  protected void finalize() throws Throwable {
-    deallocate(slot);
-  }
-
   public byte[] decode(byte[] spx) {
     return decode(slot, spx, spx.length, null, -1);
+  }
+
+  public void close() {
+    deallocate(slot);
   }
 
   private native static byte[] decode(int slot, byte[] frame, int length, byte[] dst_buf, int index);
