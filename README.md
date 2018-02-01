@@ -1,4 +1,4 @@
-# speex4j
+# speex4j [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.orctom/speex4j/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.orctom/speex4j)
 
 ## Purpose
 
