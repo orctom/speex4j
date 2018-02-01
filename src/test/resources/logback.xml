@@ -6,7 +6,7 @@
     </encoder>
   </appender>
 
-  <logger name="com.orctom.pipeline" level="trace" additivity="false">
+  <logger name="com.orctom" level="trace" additivity="false">
     <appender-ref ref="stdout"/>
   </logger>
 

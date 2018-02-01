@@ -1,5 +1,7 @@
 package com.orctom.speex4j;
 
+import java.util.List;
+
 public class Bytes {
 
   public static byte[] shortToByte(short number) {
@@ -21,20 +23,25 @@ public class Bytes {
     return s;
   }
 
-  public static short[] byteArray2ShortArray(byte[] b) {
-    int len = b.length / 2;
-    int index = 0;
-    short[] re = new short[len];
-    byte[] buf = new byte[2];
-    for (int i = 0; i < b.length;) {
-      buf[0] = b[i];
-      buf[1] = b[i + 1];
-      short st = byteToShort(buf);
-      re[index] = st;
-      index++;
-      i += 2;
+  public static byte[] toByteArray(short[] inputData) {
+    int len = inputData.length * 2;
+    byte[] ret = new byte[len];
+
+    for (int i = 0; i < len; i += 2) {
+      ret[i] = (byte) (inputData[i / 2] & 0xff);
+      ret[i + 1] = (byte) ((inputData[i / 2] >> 8) & 0xff);
     }
-    return re;
+    return ret;
+  }
+
+  protected static short[] toShortArray(byte[] inputData) {
+    int len = inputData.length / 2;
+    short[] ret = new short[len];
+
+    for (int i = 0; i < len; i++) {
+      ret[i] = (short) ((inputData[i * 2 + 1] << 8) & 0xffff | (inputData[i * 2] & 0x00ff));
+    }
+    return ret;
   }
 
   public static byte[] shortArray2ByteArray(short[] b) {
@@ -48,5 +55,19 @@ public class Bytes {
       index += 2;
     }
     return rebt;
+  }
+
+  public static byte[] concat(List<byte[]> list) {
+    int length = 0;
+    for (byte[] array : list) {
+      length += array.length;
+    }
+    byte[] result = new byte[length];
+    int pos = 0;
+    for (byte[] array : list) {
+      System.arraycopy(array, 0, result, pos, array.length);
+      pos += array.length;
+    }
+    return result;
   }
 }

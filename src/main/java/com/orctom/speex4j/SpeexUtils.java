@@ -1,92 +1,61 @@
 package com.orctom.speex4j;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.util.Random;
 
 public abstract class SpeexUtils {
 
-  public final static int AUDIO_SAMPLE_RATE = 8000;
+  public static byte[] generateWaveHeader(int channels, int sampleRate, int sampleCount) {
+    int headerSize = 44;
+    byte[] header = new byte[headerSize];
+    writeString(header, 0, "RIFF");
+    writeInt(header, 4, 2 * channels * sampleCount + headerSize - 8);
+    writeString(header, 8, "WAVE");
+    writeString(header, 12, "fmt ");
+    writeInt(header, 16, 16);                         // Size of format chunk
+    writeShort(header, 20, (short) 0x01);                 // Format tag: PCM
+    writeShort(header, 22, (short) channels);             // Number of channels
+    writeInt(header, 24, sampleRate);                     // Sampling frequency
+    writeInt(header, 28, 2 * sampleRate * channels);  // Average bytes per second
+    writeShort(header, 32, (short) 2 * channels);     // Blocksize of data
+    writeShort(header, 34, (short) 16);                   // Bits per sample
+    writeString(header, 36, "data");
+    writeInt(header, 40, 2 * sampleCount * channels); // Data Size
+    return header;
+  }
 
-  public final static int CHANNELS = 1;
+  private static void writeString(byte[] data, int offset, String val) {
+    byte[] str = val.getBytes();
+    System.arraycopy(str, 0, data, offset, str.length);
+  }
 
-  public static void raw2Wav(String inFilename, String outFilename, int bufferSizeInBytes) {
-    FileInputStream in = null;
-    FileOutputStream out = null;
-    long totalAudioLen = 0;
-    long totalDataLen = totalAudioLen + 36;
-    int channels = CHANNELS;
-    long byteRate = 16 * AUDIO_SAMPLE_RATE * channels / 8;
-    byte[] data = new byte[bufferSizeInBytes];
-    try {
-      in = new FileInputStream(inFilename);
-      out = new FileOutputStream(outFilename);
-      totalAudioLen = in.getChannel().size();
-      totalDataLen = totalAudioLen + 36;
-      writeWaveFileHeader(out, totalAudioLen, totalDataLen, AUDIO_SAMPLE_RATE, channels, byteRate);
-      while (in.read(data) != -1) {
-        out.write(data);
-      }
-      in.close();
-      out.close();
-    } catch (Exception e) {
-      e.printStackTrace();
+  private static void writeInt(byte[] data, int offset, int val) {
+    data[offset] = (byte) (0xff & val);
+    data[offset + 1] = (byte) (0xff & (val >>> 8));
+    data[offset + 2] = (byte) (0xff & (val >>> 16));
+    data[offset + 3] = (byte) (0xff & (val >>> 24));
+  }
+
+  private static void writeShort(byte[] data, int offset, int val) {
+    data[offset] = (byte) (0xff & val);
+    data[offset + 1] = (byte) (0xff & (val >>> 8));
+  }
+
+  public static int[] generateWhiteNoise(int sampleCount, int stddev) {
+    if (sampleCount < 0) {
+      return new int[0];
     }
+    Random random = new Random();
+    // Generate White Noise.
+    int[] signal = new int[sampleCount];
+    for (int i = 0; i < sampleCount; i++) {
+      signal[i] = (int) (random.nextGaussian() * stddev);
+      if (signal[i] > 32767)
+        signal[i] = 32767;
+      if (signal[i] < -32768)
+        signal[i] = -32768;
+    }
+    return signal;
   }
 
 
-  private static void writeWaveFileHeader(FileOutputStream out,
-                                          long totalAudioLen,
-                                          long totalDataLen,
-                                          long longSampleRate,
-                                          int channels,
-                                          long byteRate)
-      throws IOException {
-    byte[] header = new byte[44];
-    header[0] = 'R'; // RIFF/WAVE header
-    header[1] = 'I';
-    header[2] = 'F';
-    header[3] = 'F';
-    header[4] = (byte) (totalDataLen & 0xff);
-    header[5] = (byte) ((totalDataLen >> 8) & 0xff);
-    header[6] = (byte) ((totalDataLen >> 16) & 0xff);
-    header[7] = (byte) ((totalDataLen >> 24) & 0xff);
-    header[8] = 'W';
-    header[9] = 'A';
-    header[10] = 'V';
-    header[11] = 'E';
-    header[12] = 'f'; // 'fmt ' chunk
-    header[13] = 'm';
-    header[14] = 't';
-    header[15] = ' ';
-    header[16] = 16; // 4 bytes: size of 'fmt ' chunk
-    header[17] = 0;
-    header[18] = 0;
-    header[19] = 0;
-    header[20] = 1; // format = 1
-    header[21] = 0;
-    header[22] = (byte) channels;
-    header[23] = 0;
-    header[24] = (byte) (longSampleRate & 0xff);
-    header[25] = (byte) ((longSampleRate >> 8) & 0xff);
-    header[26] = (byte) ((longSampleRate >> 16) & 0xff);
-    header[27] = (byte) ((longSampleRate >> 24) & 0xff);
-    header[28] = (byte) (byteRate & 0xff);
-    header[29] = (byte) ((byteRate >> 8) & 0xff);
-    header[30] = (byte) ((byteRate >> 16) & 0xff);
-    header[31] = (byte) ((byteRate >> 24) & 0xff);
-    header[32] = (byte) (2 * 16 / 8); // block align
-    header[33] = 0;
-    header[34] = 16; // bits per sample
-    header[35] = 0;
-    header[36] = 'd';
-    header[37] = 'a';
-    header[38] = 't';
-    header[39] = 'a';
-    header[40] = (byte) (totalAudioLen & 0xff);
-    header[41] = (byte) ((totalAudioLen >> 8) & 0xff);
-    header[42] = (byte) ((totalAudioLen >> 16) & 0xff);
-    header[43] = (byte) ((totalAudioLen >> 24) & 0xff);
-    out.write(header, 0, 44);
-  }
 }

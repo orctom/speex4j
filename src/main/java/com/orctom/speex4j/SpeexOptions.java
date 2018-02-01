@@ -2,28 +2,28 @@ package com.orctom.speex4j;
 
 public class SpeexOptions {
 
-  public static final SpeexOptions DEFAULT = new SpeexOptions(SamplingRate.WIDE_BAND, 8, 320);
+  public static final SpeexOptions DEFAULT = new SpeexOptions(Mode.WIDE_BAND, 8, 16000);
 
-  private SamplingRate samplingRate;
+  private Mode mode;
   private int quality;
-  private int frameSize;
+  private int samplingRate;
 
-  SpeexOptions(SamplingRate samplingRate, int quality, int frameSize) {
-    this.samplingRate = samplingRate;
+  SpeexOptions(Mode mode, int quality, int samplingRate) {
+    this.mode = mode;
     this.quality = quality;
-    this.frameSize = frameSize;
+    this.samplingRate = samplingRate;
   }
 
-  public SamplingRate getSamplingRate() {
-    return samplingRate;
+  public Mode getMode() {
+    return mode;
   }
 
   public int getQuality() {
     return quality;
   }
 
-  public int getFrameSize() {
-    return frameSize;
+  public int getSamplingRate() {
+    return samplingRate;
   }
 
   public static Builder builder() {
@@ -32,11 +32,11 @@ public class SpeexOptions {
 
   public static class Builder {
 
-    private SamplingRate samplingRate;
+    private Mode samplingRate;
     private int quality;
     private int frameSize;
 
-    public Builder samplingRate(SamplingRate samplingRate) {
+    public Builder samplingRate(Mode samplingRate) {
       this.samplingRate = samplingRate;
       return this;
     }

@@ -32,3 +32,4 @@ DummyTest
 *.gchhs_er
 hs_er*
 *.gch
+/src/main/jni/CMakeFiles/

@@ -1,57 +1,37 @@
 package com.orctom.speex4j;
 
+import com.sun.jna.Pointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SpeexDecoder {
+import java.io.Closeable;
+
+public class SpeexDecoder implements Closeable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SpeexDecoder.class);
 
-  static {
-    NativeUtils.loadLibrary("speexcodec");
+  private Pointer state;
+
+  public SpeexDecoder() {
+    this(Mode.WIDE_BAND);
   }
 
-  protected SpeexDecoder(SamplingRate samplingRate) {
-    open(samplingRate.getCode());
-  }
-
-  public static SpeexDecoder newInstance(SamplingRate samplingRate) {
-    return new SpeexDecoder(samplingRate);
+  public SpeexDecoder(Mode mode) {
+    state = Speex.INSTANCE.create_decoder(mode.getCode());
   }
 
   public byte[] decode(byte[] spx) {
-    short[] pcm = new short[spx.length];
-    int code = decode(spx, pcm);
-    if (0 != code) {
-      throw new RuntimeException("Failed to encode");
-    }
-
-    return toByteArray(pcm);
-  }
-
-  protected byte[] toByteArray(short[] inputData) {
-    int len = inputData.length * 2;
-    byte[] ret = new byte[len];
-
-    for (int i = 0; i < len; i += 2) {
-      ret[i] = (byte) (inputData[i / 2] & 0xff);
-      ret[i + 1] = (byte) ((inputData[i / 2] >> 8) & 0xff);
-    }
-    return ret;
-  }
-
-  public void close() {
-    destroy();
+    int len = spx.length;
+    int size = ((len - 1) / 71 + 1) * 320;
+    short[] pcm = new short[size];
+    int pcmSize = Speex.INSTANCE.decode(state, spx, len, pcm);
+    LOGGER.debug("size: {}, pcmSize: {}", size, pcmSize);
+    return Bytes.toByteArray(pcm);
   }
 
   @Override
-  protected void finalize() throws Throwable {
-    destroy();
+  public void close() {
+    LOGGER.debug("close");
+    Speex.INSTANCE.destroy_decoder(state);
   }
-
-  protected native void open(int mode);
-
-  protected native int decode(byte[] spx, short[] pcm);
-
-  public native void destroy();
 }
