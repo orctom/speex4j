@@ -4,6 +4,10 @@
 
 Provide a speex encoder and decoder in Java.
 
+**Notice**
+* Using the the way that in speex sample (sampleenc.c / sampledec.c) to encode and decode
+* 16 bits per sample
+
 ## Usage
 
 ```
@@ -27,6 +31,9 @@ try (SpeexDecoder decoder = new SpeexDecoder()) {
 ```
 
 ## Change log
+
+#### 1.0.1
+* Added SpeexUtils to convert between pcm and wav.
 
 #### 1.0
 * Speex encoder and decoder with fixed `frame size` of 320.

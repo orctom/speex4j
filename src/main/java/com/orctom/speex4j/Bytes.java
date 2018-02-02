@@ -57,7 +57,7 @@ public class Bytes {
     return rebt;
   }
 
-  public static byte[] concat(List<byte[]> list) {
+  public static byte[] concat(byte[]... list) {
     int length = 0;
     for (byte[] array : list) {
       length += array.length;
