@@ -32,6 +32,9 @@ try (SpeexDecoder decoder = new SpeexDecoder()) {
 
 ## Change log
 
+#### 1.0.2
+* Added safety check for `close` method.
+
 #### 1.0.1
 * Added SpeexUtils to convert between pcm and wav.
 
