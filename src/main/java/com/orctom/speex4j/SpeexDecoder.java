@@ -5,10 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SpeexDecoder implements Closeable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SpeexDecoder.class);
+
+  private AtomicBoolean stopped = new AtomicBoolean(false);
 
   private Pointer state;
 
@@ -31,6 +34,9 @@ public class SpeexDecoder implements Closeable {
 
   @Override
   public void close() {
+    if (stopped.getAndSet(true)) {
+      return;
+    }
     LOGGER.debug("close");
     Speex.INSTANCE.destroy_decoder(state);
   }
