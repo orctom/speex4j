@@ -6,7 +6,7 @@ import com.sun.jna.Pointer;
 
 public interface Speex extends Library {
 
-  Speex INSTANCE = Native.loadLibrary("speex", Speex.class);
+  Speex INSTANCE = Native.loadLibrary("spx", Speex.class);
 
   Pointer create_encoder(int mode, int quality, int sampling_rate);
   Pointer create_decoder(int mode);

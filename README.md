@@ -32,6 +32,11 @@ try (SpeexDecoder decoder = new SpeexDecoder()) {
 
 ## Change log
 
+#### 1.0.3
+* Renamed share lib name, so you don't have to have the libspeex.so/libspeex.dylib deleted from your `LD_LIBRARY_PATH`.
+
+#### 1.0.2
+* Added safety check for `close` method.
 #### 1.0.2
 * Added safety check for `close` method.
 
