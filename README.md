@@ -34,6 +34,7 @@ try (SpeexDecoder decoder = new SpeexDecoder()) {
 
 #### 1.0.3
 * Renamed share lib name, so you don't have to have the libspeex.so/libspeex.dylib deleted from your `LD_LIBRARY_PATH`.
+* Fixed `pcm2wav` issue in `SpeexUtils`.
 
 #### 1.0.2
 * Added safety check for `close` method.
