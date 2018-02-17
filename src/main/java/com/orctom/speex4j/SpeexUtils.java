@@ -13,18 +13,26 @@ public abstract class SpeexUtils {
     }
   }
 
+  public static byte[] pcm2wav(byte[] pcm) {
+    return addHeader(pcm, 16000, 16);
+  }
+
   public static byte[] spx2pcm(byte[] spx) {
     try (SpeexDecoder decoder = new SpeexDecoder()) {
       return decoder.decode(spx);
     }
   }
 
+  public static byte[] spx2wav(byte[] spx) {
+    return pcm2wav(spx2pcm(spx));
+  }
+
   public static byte[] wav2pcm(byte[] wav) {
     return Arrays.copyOfRange(wav, 44, wav.length);
   }
 
-  public static byte[] pcm2wav(byte[] pcm) {
-    return addHeader(pcm, 16000, 16);
+  public static byte[] wav2spx(byte[] wav) {
+    return pcm2spx(wav2pcm(wav));
   }
 
   public static byte[] pcm2wav(byte[] pcm, int samplingRate, int bitsPerSample) {
@@ -32,7 +40,7 @@ public abstract class SpeexUtils {
   }
 
   private static byte[] addHeader(byte[] pcm, int samplingRate, int bitsPerSample) {
-    byte[] header = generateWavHeader(1, samplingRate, bitsPerSample);
+    byte[] header = generateWavHeader(pcm.length, samplingRate, bitsPerSample);
     return Bytes.concat(header, pcm);
   }
 
@@ -66,41 +74,59 @@ public abstract class SpeexUtils {
     return data;
   }
 
+  public static byte[] generateWavHeader(int pcmLength, int sampleRate, int bitsPerSample) {
+    byte[] header = new byte[44];
 
-  public static byte[] generateWavHeader(int channels, int samplingRate, int sampleCount) {
-    int headerSize = 44;
-    byte[] header = new byte[headerSize];
-    writeString(header, 0, "RIFF");
-    writeInt(header, 4, 2 * channels * sampleCount + headerSize - 8);
-    writeString(header, 8, "WAVE");
-    writeString(header, 12, "fmt ");
-    writeInt(header, 16, 16);                         // Size of format chunk
-    writeShort(header, 20, (short) 0x01);                 // Format tag: PCM
-    writeShort(header, 22, (short) channels);             // Number of channels
-    writeInt(header, 24, samplingRate);                     // Sampling frequency
-    writeInt(header, 28, 2 * samplingRate * channels);  // Average bytes per second
-    writeShort(header, 32, (short) 2 * channels);     // Blocksize of data
-    writeShort(header, 34, (short) 16);                   // Bits per sample
-    writeString(header, 36, "data");
-    writeInt(header, 40, 2 * sampleCount * channels); // Data Size
+    long totalDataLen = pcmLength + 36;
+    int channel = 1;
+    long bitrate = sampleRate * channel * bitsPerSample;
+
+    header[0] = 'R';
+    header[1] = 'I';
+    header[2] = 'F';
+    header[3] = 'F';
+    header[4] = (byte) (totalDataLen & 0xff);
+    header[5] = (byte) ((totalDataLen >> 8) & 0xff);
+    header[6] = (byte) ((totalDataLen >> 16) & 0xff);
+    header[7] = (byte) ((totalDataLen >> 24) & 0xff);
+    header[8] = 'W';
+    header[9] = 'A';
+    header[10] = 'V';
+    header[11] = 'E';
+    header[12] = 'f';
+    header[13] = 'm';
+    header[14] = 't';
+    header[15] = ' ';
+    header[16] = (byte) 16;
+    header[17] = 0;
+    header[18] = 0;
+    header[19] = 0;
+    header[20] = 1;
+    header[21] = 0;
+    header[22] = (byte) channel;
+    header[23] = 0;
+    header[24] = (byte) (sampleRate & 0xff);
+    header[25] = (byte) ((sampleRate >> 8) & 0xff);
+    header[26] = (byte) ((sampleRate >> 16) & 0xff);
+    header[27] = (byte) ((sampleRate >> 24) & 0xff);
+    header[28] = (byte) ((bitrate / 8) & 0xff);
+    header[29] = (byte) (((bitrate / 8) >> 8) & 0xff);
+    header[30] = (byte) (((bitrate / 8) >> 16) & 0xff);
+    header[31] = (byte) (((bitrate / 8) >> 24) & 0xff);
+    header[32] = (byte) ((channel * bitsPerSample) / 8);
+    header[33] = 0;
+    header[34] = (byte) bitsPerSample;
+    header[35] = 0;
+    header[36] = 'd';
+    header[37] = 'a';
+    header[38] = 't';
+    header[39] = 'a';
+    header[40] = (byte) (pcmLength & 0xff);
+    header[41] = (byte) ((pcmLength >> 8) & 0xff);
+    header[42] = (byte) ((pcmLength >> 16) & 0xff);
+    header[43] = (byte) ((pcmLength >> 24) & 0xff);
+
     return header;
-  }
-
-  private static void writeString(byte[] data, int offset, String val) {
-    byte[] str = val.getBytes();
-    System.arraycopy(str, 0, data, offset, str.length);
-  }
-
-  private static void writeInt(byte[] data, int offset, int val) {
-    data[offset] = (byte) (0xff & val);
-    data[offset + 1] = (byte) (0xff & (val >>> 8));
-    data[offset + 2] = (byte) (0xff & (val >>> 16));
-    data[offset + 3] = (byte) (0xff & (val >>> 24));
-  }
-
-  private static void writeShort(byte[] data, int offset, int val) {
-    data[offset] = (byte) (0xff & val);
-    data[offset + 1] = (byte) (0xff & (val >>> 8));
   }
 
   public static int[] generateWhiteNoise(int sampleCount, int stddev) {
